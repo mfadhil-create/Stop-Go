@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="title" content="Stop & Go - Gamifikasi Edukasi Rambu Lalu Lintas">
+<meta name="description" content="Media pembelajaran interaktif berbasis game ular tangga online untuk mengenalkan dan menguji pemahaman rambu lalu lintas secara menyenangkan.">
+<meta name="keywords" content="ular tangga, rambu lalu lintas, game edukasi, safety riding, stop and go">
+<meta name="author" content="Fadhil">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Stop & Go - Gamifikasi Edukasi Rambu Lalu Lintas">
+<meta property="og:description" content="Mainkan game ular tangga interaktif dan uji pengetahuanmu tentang rambu lalu lintas jalan raya!">
+<title>Stop & Go - Ular Tangga Rambu Lalu Lintas</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg-1: #0b1220; --bg-2: #1e293b; --panel: rgba(255,255,255,.055);
+  --panel-border: rgba(255,255,255,.12); --text: #e2e8f0; --muted: #94a3b8;
+  --amber: #f59e0b; --green: #22c55e; --red: #ef4444; --sky: #38bdf8;
+  --radius: 18px;
+}
+html, body { height: 100%; }
+body {
+  font-family: "Segoe UI", system-ui, sans-serif; color: var(--text);
+  background: radial-gradient(1100px 600px at 15% -10%, #24365c 0%, transparent 60%),
+              radial-gradient(900px 500px at 110% 110%, #173a2e 0%, transparent 55%),
+              linear-gradient(160deg, var(--bg-2), var(--bg-1));
+  min-height: 100vh; overflow-x: hidden;
+}
+
+.topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 22px; border-bottom: 1px solid var(--panel-border); background: rgba(2,6,23,.35); backdrop-filter: blur(8px); position: sticky; top: 0; z-index: 20; }
+.brand { display: flex; align-items: center; gap: 12px; }
+.brand-icon { font-size: 2rem; filter: drop-shadow(0 4px 10px rgba(245,158,11,.45)); }
+.brand h1 { font-size: 1.25rem; background: linear-gradient(90deg,#fbbf24,#34d399,#38bdf8); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.brand p { font-size: .75rem; color: var(--muted); }
+.top-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.mode-tag { font-size: .75rem; padding: 6px 12px; border-radius: 999px; background: rgba(56,189,248,.12); border: 1px solid rgba(56,189,248,.35); color: #7dd3fc; }
+.btn-ghost { cursor: pointer; font: inherit; font-size: .8rem; color: var(--text); background: rgba(255,255,255,.06); border: 1px solid var(--panel-border); padding: 8px 13px; border-radius: 12px; transition: .2s; }
+.btn-ghost:hover { background: rgba(255,255,255,.14); transform: translateY(-1px); }
+
+.layout { display: flex; gap: 18px; align-items: stretch; padding: 16px 20px 20px; max-width: 1500px; margin: 0 auto; }
+.board-zone { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; justify-content: center; }
+.board-frame { aspect-ratio: 1/1; width: min(100%, calc(100vh - 130px)); padding: 10px; border-radius: 24px; background: linear-gradient(145deg,#1e293b,#0f172a); border: 1px solid var(--panel-border); box-shadow: 0 24px 60px rgba(0,0,0,.5); }
+
+.board { position: relative; width: 100%; height: 100%; display: grid; grid-template-columns: repeat(10,1fr); grid-template-rows: repeat(10,1fr); gap: 3px; }
+.tile { position: relative; border-radius: 6px; background: #f1f5f9; box-shadow: inset 0 -2px 0 rgba(15,23,42,.08); display: flex; align-items: center; justify-content: center; transition: transform .15s; }
+.tile.alt { background: #dbeafe; }
+.tile:hover { transform: scale(1.04); z-index: 3; }
+.tile .num { position: absolute; top: 2px; left: 4px; font-size: clamp(7px,1.05vmin,12px); font-weight: 700; color: #64748b; }
+.tile.sign { background: linear-gradient(135deg,#fde68a,#fcd34d); }
+.tile.sign.alt { background: linear-gradient(135deg,#fcd34d,#fbbf24); }
+.tile.lb { outline: 2px solid var(--green); outline-offset: -2px; }
+.tile.sh { outline: 2px solid var(--red); outline-offset: -2px; }
+.tile.start { background: linear-gradient(135deg,#22c55e,#16a34a); }
+.tile.start .num, .tile.finish .num { color: #fff; }
+.tile.finish { background: repeating-conic-gradient(#0f172a 0% 25%, #f8fafc 0% 50%) 0 0/14px 14px; }
+.tile-label { font-size: clamp(6px,.9vmin,10px); font-weight: 800; color: #fff; letter-spacing: .5px; text-shadow: 0 1px 2px rgba(0,0,0,.5); }
+.tile-label.flag { font-size: clamp(10px,1.7vmin,20px); text-shadow: none; }
+.tile .badge { position: absolute; right: 2px; bottom: 1px; font-size: clamp(7px,1.1vmin,13px); filter: drop-shadow(0 1px 1px rgba(0,0,0,.4)); }
+
+.mini { position: relative; width: 52%; aspect-ratio: 1/1; display: flex; align-items: center; justify-content: center; }
+.mini.m-larangan { background: #fff; border: max(2px,.5vmin) solid #dc2626; border-radius: 50%; }
+.mini.m-larangan::after { content: ""; position: absolute; left: -8%; top: 42%; width: 116%; height: 14%; background: #dc2626; transform: rotate(-45deg); border-radius: 4px; }
+.mini.m-peringatan { background: #fbbf24; clip-path: polygon(50% 6%,96% 94%,4% 94%); filter: drop-shadow(0 1px 1px rgba(0,0,0,.45)); }
+.mini.m-perintah { background: #2563eb; border-radius: 50%; }
+.mini.m-petunjuk { background: #16a34a; border-radius: 18%; }
+
+#overlaySvg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2; }
+
+.token { position: absolute; transform: translate(-50%,-50%); border-radius: 50%; z-index: 6; display: flex; align-items: center; justify-content: center; border: 3px solid #fff; box-shadow: 0 6px 14px rgba(0,0,0,.5); transition: left .18s ease, top .18s ease; overflow: hidden; background: #fff; }
+.token.glide { transition: left .8s cubic-bezier(.45,-.25,.55,1.25), top .8s cubic-bezier(.45,-.25,.55,1.25); }
+.token img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+
+.panel { width: 370px; flex: 0 0 370px; display: flex; flex-direction: column; gap: 14px; max-height: calc(100vh - 110px); overflow-y: auto; padding-right: 2px; }
+.panel::-webkit-scrollbar { width: 6px; }
+.panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,.15); border-radius: 3px; }
+.panel-section { background: var(--panel); border: 1px solid var(--panel-border); border-radius: var(--radius); padding: 14px; backdrop-filter: blur(10px); }
+.players { display: flex; flex-direction: column; gap: 10px; }
+.pcard { position: relative; display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 14px; background: rgba(2,6,23,.35); border: 2px solid transparent; transition: .25s; }
+.pcard .avatar { width: 44px; height: 44px; border-radius: 12px; flex: 0 0 44px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,.08); overflow: hidden; }
+.pcard .avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 12px; }
+.pcard .pinfo { display: flex; flex-direction: column; gap: 2px; }
+.pcard .pinfo b { font-size: .95rem; }
+.pcard .pinfo small { color: var(--muted); font-size: .75rem; }
+.pcard .pinfo small span { color: #fbbf24; font-weight: 700; }
+.pcard .turn-chip { display: none; margin-left: auto; font-size: .62rem; font-weight: 800; letter-spacing: 1px; padding: 4px 9px; border-radius: 999px; background: linear-gradient(90deg,var(--amber),#f97316); color: #1f1300; }
+.pcard.active { border-color: var(--amber); box-shadow: 0 0 0 3px rgba(245,158,11,.18), 0 8px 22px rgba(245,158,11,.15); transform: translateX(3px); }
+.pcard.active .turn-chip { display: inline-block; animation: chipPulse 1.4s ease infinite; }
+@keyframes chipPulse { 50% { transform: scale(1.08); } }
+
+.dice-area { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.dice { width: 88px; height: 88px; border-radius: 18px; background: linear-gradient(145deg,#ffffff,#e2e8f0); box-shadow: 0 10px 24px rgba(0,0,0,.45); display: grid; grid-template-columns: repeat(3,1fr); grid-template-rows: repeat(3,1fr); padding: 12px; gap: 4px; }
+.dice .cell { display: flex; align-items: center; justify-content: center; }
+.dice .cell.pip::after { content: ""; width: 74%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle at 32% 30%, #475569, #0f172a 70%); }
+.dice.rolling { animation: diceShake .55s ease; }
+@keyframes diceShake { 0% { transform: rotate(0) scale(1); } 25% { transform: rotate(90deg) scale(1.12); } 50% { transform: rotate(200deg) scale(.95); } 75% { transform: rotate(300deg) scale(1.08); } 100% { transform: rotate(360deg) scale(1); } }
+.btn-roll { cursor: pointer; font: inherit; font-weight: 800; font-size: 1rem; width: 100%; padding: 14px 16px; border: none; border-radius: 14px; color: #231a00; background: linear-gradient(135deg,#fbbf24,#f97316); box-shadow: 0 10px 24px rgba(249,115,22,.35); transition: .2s; }
+.btn-roll:hover:not(:disabled) { transform: translateY(-2px); filter: brightness(1.06); }
+.btn-roll:disabled { cursor: not-allowed; filter: grayscale(.55) brightness(.75); box-shadow: none; }
+
+.deck-area { display: flex; align-items: center; gap: 16px; }
+.deck-pile { position: relative; width: 72px; height: 96px; flex: 0 0 72px; }
+.dcard { position: absolute; inset: 0; border-radius: 11px; background: linear-gradient(135deg,#6366f1,#0ea5e9); border: 2px solid rgba(255,255,255,.4); box-shadow: 0 6px 14px rgba(0,0,0,.4); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; color: #fff; }
+.dcard.c3 { transform: translate(6px,-6px); opacity: .55; }
+.dcard.c2 { transform: translate(3px,-3px); opacity: .8; }
+.deck-count { position: absolute; top: -9px; right: -9px; z-index: 2; min-width: 26px; height: 26px; padding: 0 6px; border-radius: 999px; display: flex; align-items: center; justify-content: center; background: var(--amber); color: #221600; font-weight: 800; font-size: .78rem; border: 2px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,.35); }
+.deck-pile.pulse { animation: deckPulse .45s ease; }
+@keyframes deckPulse { 40% { transform: scale(1.08) rotate(-2deg); } }
+.deck-info b { font-size: .9rem; display: block; margin-bottom: 3px; }
+.deck-info small { color: var(--muted); font-size: .72rem; line-height: 1.35; display: block; }
+
+.log-area h3 { font-size: .85rem; margin-bottom: 8px; }
+#logList { list-style: none; max-height: 150px; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; font-size: .74rem; color: #cbd5e1; }
+#logList li { background: rgba(2,6,23,.35); border-left: 3px solid var(--sky); padding: 6px 9px; border-radius: 8px; line-height: 1.35; animation: logIn .3s ease; }
+@keyframes logIn { from { opacity: 0; transform: translateY(-5px); } }
+
+.modal { position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center; padding: 18px; background: rgba(2,6,23,.72); backdrop-filter: blur(6px); opacity: 0; pointer-events: none; transition: opacity .28s ease; }
+.modal.show { opacity: 1; pointer-events: auto; }
+.btn-primary { cursor: pointer; font: inherit; font-weight: 800; padding: 12px 22px; border: none; border-radius: 13px; color: #231a00; background: linear-gradient(135deg,#fbbf24,#f97316); box-shadow: 0 8px 20px rgba(249,115,22,.35); transition: .2s; }
+.btn-primary:hover { transform: translateY(-2px); filter: brightness(1.06); }
+
+.card3d { display: grid; width: min(600px,94vw); transform-style: preserve-3d; transition: transform .85s cubic-bezier(.35,.1,.25,1); transform: rotateY(180deg) scale(.9); }
+.card3d.flipped { transform: rotateY(0deg) scale(1); }
+.face { grid-area: 1/1; border-radius: 22px; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+.face.front { background: linear-gradient(170deg,#ffffff,#f1f5f9); color: #0f172a; padding: 22px 24px; box-shadow: 0 30px 80px rgba(0,0,0,.55); }
+.face.back { transform: rotateY(180deg); background: repeating-linear-gradient(45deg, rgba(255,255,255,.06) 0 14px, transparent 14px 28px), linear-gradient(135deg,#4f46e5,#0ea5e9); border: 3px solid rgba(255,255,255,.35); min-height: 420px; display: flex; align-items: center; justify-content: center; box-shadow: 0 30px 80px rgba(0,0,0,.55); }
+.back-inner { text-align: center; color: #fff; }
+.back-lights { display: flex; gap: 8px; justify-content: center; margin-bottom: 14px; }
+.back-lights i { width: 16px; height: 16px; border-radius: 50%; box-shadow: 0 0 12px currentColor; }
+.back-lights i:nth-child(1) { background: #ef4444; color: #ef4444; }
+.back-lights i:nth-child(2) { background: #fbbf24; color: #fbbf24; }
+.back-lights i:nth-child(3) { background: #22c55e; color: #22c55e; }
+.back-inner h2 { letter-spacing: 4px; font-size: 1.5rem; }
+.back-inner p { opacity: .85; font-size: .85rem; margin-top: 4px; }
+.back-q { display: inline-block; font-size: 3.4rem; margin-top: 14px; animation: floaty 2.2s ease-in-out infinite; }
+@keyframes floaty { 50% { transform: translateY(-8px); } }
+
+.quiz-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+.quiz-cat { font-size: .72rem; font-weight: 800; letter-spacing: .6px; padding: 6px 12px; border-radius: 999px; }
+.quiz-cat.cat-larangan { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
+.quiz-cat.cat-peringatan { background: #fef9c3; color: #a16207; border: 1px solid #fde047; }
+.quiz-cat.cat-perintah { background: #dbeafe; color: #1d4ed8; border: 1px solid #93c5fd; }
+.quiz-cat.cat-petunjuk { background: #dcfce7; color: #15803d; border: 1px solid #86efac; }
+.quiz-turn { font-size: .8rem; font-weight: 700; color: #334155; }
+.sign-visual { position: relative; width: 150px; height: 150px; margin: 0 auto 6px; display: flex; align-items: center; justify-content: center; }
+.sign-visual img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.quiz-q { font-size: 1.02rem; font-weight: 700; text-align: center; line-height: 1.45; margin-bottom: 14px; }
+.opts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.opts.locked .opt { pointer-events: none; opacity: .85; }
+.opt { cursor: pointer; font: inherit; text-align: left; display: flex; align-items: center; gap: 10px; padding: 11px 12px; border-radius: 13px; background: #f8fafc; border: 2px solid #e2e8f0; font-size: .85rem; font-weight: 600; color: #0f172a; transition: .18s; }
+.opt:hover { border-color: #38bdf8; transform: translateY(-2px); box-shadow: 0 6px 14px rgba(56,189,248,.18); }
+.opt-letter { flex: 0 0 28px; height: 28px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: .8rem; background: #e2e8f0; color: #334155; }
+.opt.correct { background: #dcfce7; border-color: #22c55e; color: #14532d; animation: popIn .35s ease; }
+.opt.correct .opt-letter { background: #22c55e; color: #fff; }
+.opt.wrong { background: #fee2e2; border-color: #ef4444; color: #7f1d1d; animation: shakeX .45s ease; }
+.opt.wrong .opt-letter { background: #ef4444; color: #fff; }
+.opt.dim { opacity: .45; }
+@keyframes popIn { 40% { transform: scale(1.05); } }
+@keyframes shakeX { 20% { transform: translateX(-6px); } 40% { transform: translateX(6px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(4px); } }
+.quiz-feedback { margin-top: 13px; text-align: center; font-weight: 800; font-size: .9rem; min-height: 24px; color: #475569; }
+.quiz-feedback.good { color: #15803d; }
+.quiz-feedback.bad { color: #b91c1c; }
+
+.sign-fallback { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 8px 16px rgba(15,23,42,.25)); }
+.sign-fallback .sym { font-size: 3rem; font-weight: 900; line-height: 1; }
+.fb-prohibit { background: #fff; border: 11px solid #dc2626; border-radius: 50%; }
+.fb-prohibit .sym { color: #0f172a; }
+.fb-prohibit .bar { position: absolute; width: 112%; height: 12px; background: #dc2626; transform: rotate(45deg); border-radius: 8px; }
+.fb-warning { background: #111827; clip-path: polygon(50% 0,100% 100%,0 100%); }
+.fb-warning .tri { position: absolute; inset: 9% 7% 5% 7%; background: #fbbf24; clip-path: polygon(50% 0,100% 100%,0 100%); }
+.fb-warning .sym { position: relative; z-index: 2; margin-top: 20%; color: #111827; font-size: 2.4rem; }
+.fb-mandatory { background: #1d5fd6; border-radius: 50%; color: #fff; }
+.fb-info { background: #0f8a5f; border-radius: 16px; color: #fff; }
+
+.win-card { text-align: center; padding: 36px 42px; border-radius: 26px; background: linear-gradient(170deg,#1e293b,#0f172a); border: 1px solid var(--panel-border); box-shadow: 0 30px 80px rgba(0,0,0,.6); animation: winIn .5s cubic-bezier(.34,1.56,.64,1); max-width: 430px; }
+@keyframes winIn { from { transform: scale(.6); opacity: 0; } }
+.win-trophy { font-size: 4rem; animation: floaty 2s ease-in-out infinite; }
+.win-card h2 { font-size: 2rem; margin: 6px 0; background: linear-gradient(90deg,#fbbf24,#f97316); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.win-name { font-size: 1.25rem; font-weight: 800; }
+.win-pts { color: var(--muted); font-size: .85rem; margin: 6px 0 18px; }
+.win-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+
+.rules-card { max-width: 560px; width: 100%; padding: 26px 28px; border-radius: 22px; background: linear-gradient(170deg,#1e293b,#0f172a); border: 1px solid var(--panel-border); box-shadow: 0 30px 80px rgba(0,0,0,.6); max-height: 88vh; overflow-y: auto; }
+.rules-card h2 { margin-bottom: 14px; }
+.rules-card ul { list-style: none; display: flex; flex-direction: column; gap: 9px; margin-bottom: 18px; }
+.rules-card li { background: rgba(255,255,255,.05); border-left: 3px solid var(--amber); padding: 9px 12px; border-radius: 10px; font-size: .84rem; line-height: 1.5; }
+
+#modeOverlay { z-index: 70; }
+.mode-card { max-width: 640px; width: 100%; text-align: center; padding: 38px 34px; border-radius: 28px; background: linear-gradient(170deg,#1e293b,#0b1220); border: 1px solid var(--panel-border); box-shadow: 0 40px 100px rgba(0,0,0,.7); }
+.mode-logo { font-size: 2.6rem; margin-bottom: 8px; }
+.mode-card h2 { font-size: 1.7rem; margin-bottom: 8px; background: linear-gradient(90deg,#fbbf24,#34d399,#38bdf8); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.mode-card > p { color: var(--muted); font-size: .9rem; line-height: 1.55; max-width: 480px; margin: 0 auto 22px; }
+.mode-actions { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-bottom: 16px; }
+.btn-mode { cursor: pointer; font: inherit; color: var(--text); display: flex; flex-direction: column; align-items: center; gap: 5px; width: 220px; padding: 20px 18px; border-radius: 18px; background: rgba(255,255,255,.06); border: 2px solid var(--panel-border); transition: .22s; }
+.btn-mode:hover { transform: translateY(-4px); border-color: var(--amber); box-shadow: 0 14px 30px rgba(245,158,11,.2); background: rgba(245,158,11,.08); }
+.btn-mode .bm-ico { font-size: 2rem; }
+.btn-mode b { font-size: 1.02rem; }
+.btn-mode small { color: var(--muted); font-size: .72rem; }
+
+.confetti { position: fixed; top: -24px; z-index: 200; border-radius: 2px; pointer-events: none; animation: confettiFall linear forwards; }
+@keyframes confettiFall { to { transform: translateY(112vh) rotate(760deg); opacity: .85; } }
+
+@media (max-width: 1080px) {
+  .layout { flex-direction: column; }
+  .board-frame { width: min(96vw,600px); }
+  .panel { width: 100%; flex: none; max-height: none; overflow: visible; }
+  .players { flex-direction: row; }
+  .pcard { flex: 1; }
+}
+@media (max-width: 640px) {
+  .opts { grid-template-columns: 1fr; }
+  .players { flex-direction: column; }
+  .topbar { flex-direction: column; align-items: flex-start; }
+  .sign-visual { width: 120px; height: 120px; }
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <span class="brand-icon">🚦</span>
+    <div>
+      <h1>Stop & Go</h1>
+      <p>Gamifikasi Edukasi Rambu Lalu Lintas Berbasis Ular Tangga Online</p>
+    </div>
+  </div>
+  <div class="top-actions">
+    <span class="mode-tag" id="modeTag">Mode: —</span>
+    <button class="btn-ghost" id="btnRules">📜 Aturan</button>
+    <button class="btn-ghost" id="btnRestart">🔄 Ulangi</button>
+    <button class="btn-ghost" id="btnHome">🏠 Mode</button>
+  </div>
+</div>
+
+<div class="layout">
+  <div class="board-zone">
+    <div class="board-frame">
+      <div class="board" id="board"></div>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-section players">
+      <div class="pcard" id="pcard0">
+        <div class="avatar" id="avatar0"></div>
+        <div class="pinfo">
+          <b id="name0">Pemain 1</b>
+          <small>Petak <span id="pos0">0</span> · Poin <span id="pts0">0</span></small>
+        </div>
+        <span class="turn-chip">GILIRAN</span>
+      </div>
+      <div class="pcard" id="pcard1">
+        <div class="avatar" id="avatar1"></div>
+        <div class="pinfo">
+          <b id="name1">Pemain 2</b>
+          <small>Petak <span id="pos1">0</span> · Poin <span id="pts1">0</span></small>
+        </div>
+        <span class="turn-chip">GILIRAN</span>
+      </div>
+    </div>
+    <div class="panel-section dice-area">
+      <div class="dice" id="dice"></div>
+      <button class="btn-roll" id="rollBtn">🎲 Lempar Dadu</button>
+    </div>
+    <div class="panel-section deck-area">
+      <div class="deck-pile" id="deckPile">
+        <div class="dcard c3">❓</div>
+        <div class="dcard c2"></div>
+        <div class="dcard">❓</div>
+        <div class="deck-count" id="deckCount">24</div>
+      </div>
+      <div class="deck-info">
+        <b>Tumpukan Kartu Soal</b>
+        <small>Jawab benar untuk naik tangga & lolos ular!</small>
+      </div>
+    </div>
+    <div class="panel-section log-area">
+      <h3>📋 Catatan Permainan</h3>
+      <ul id="logList"></ul>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="quizModal">
+  <div class="card3d" id="quizCard">
+    <div class="face front">
+      <div class="quiz-head">
+        <span class="quiz-cat" id="quizCat">KARTU SOAL</span>
+        <span class="quiz-turn" id="quizTurn">Pemain menjawab</span>
+      </div>
+      <div class="sign-visual" id="quizSign"></div>
+      <div class="quiz-q" id="quizText"></div>
+      <div class="opts" id="quizOpts"></div>
+      <div class="quiz-feedback" id="quizFb"></div>
+    </div>
+    <div class="face back">
+      <div class="back-inner">
+        <div class="back-lights"><i></i><i></i><i></i></div>
+        <h2>KARTU SOAL</h2>
+        <p>Rambu Lalu Lintas</p>
+        <div class="back-q">❓</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="winModal">
+  <div class="win-card">
+    <div class="win-trophy">🏆</div>
+    <h2>Menang!</h2>
+    <div class="win-name" id="winnerName">Pemain 1</div>
+    <div class="win-pts" id="winnerPts">0 poin</div>
+    <div class="win-actions">
+      <button class="btn-primary" id="btnReplay">🔄 Main Lagi</button>
+      <button class="btn-ghost" id="btnChangeMode">🏠 Ganti Mode</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="rulesModal">
+  <div class="rules-card">
+    <h2>📜 Aturan Permainan</h2>
+    <ul>
+      <li>🎲 Lempar dadu, maju sesuai angka. Petak 100 harus dicapai tepat.</li>
+      <li>🃏 Mendarat di petak rambu (kuning) membuka kartu soal pilihan ganda.</li>
+      <li>🪜 Tangga: hanya bisa naik jika menjawab soal dengan benar.</li>
+      <li>🐍 Kepala ular: jawab benar = selamat; jawab salah = meluncur turun.</li>
+      <li>⛔ Salah menjawab soal rambu larangan = penalti mundur 2 langkah.</li>
+      <li>⭐ Setiap jawaban benar mendapat +10 poin. Pemain pertama di petak 100 menang!</li>
+    </ul>
+    <button class="btn-primary" id="btnCloseRules">Mengerti, lanjut! ✅</button>
+  </div>
+</div>
+
+<div class="modal show" id="modeOverlay">
+  <div class="mode-card">
+    <div class="mode-logo">🚦</div>
+    <h2>Stop & Go</h2>
+    <p>Naik tangga dengan menjawab soal rambu, hati-hati dengan ular & rambu larangan! Pilih mode bermain:</p>
+    <div class="mode-actions">
+      <button class="btn-mode" id="btnPvp">
+        <span class="bm-ico">👥</span>
+        <b>2 Pemain</b>
+        <small>Pass & Play bergantian</small>
+      </button>
+      <button class="btn-mode" id="btnCpu">
+        <span class="bm-ico">🤖</span>
+        <b>Pemain vs CPU</b>
+        <small>Lawan komputer</small>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const rnd = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+const $ = (id) => document.getElementById(id);
+
+// Audio kemenangan (memanggil file win_sfx.mp3 di root direktori)
+const winAudio = new Audio('win_sfx.mp3');
+
+function makeQ(img, cat, shape, sym, q, opts) {
+  return { img, cat, shape, sym, q, opts };
+}
+
+/* ---------------- BANK SOAL RAMBU (24 Soal Lengkap) ---------------- */
+const QUESTIONS = [
+  // --- LARANGAN ---
+  makeQ("dilarang-parkir.png", "larangan", "prohibit", "P",
+    "Rambu lingkaran merah berisi huruf P yang dicoret artinya…",
+    ["Dilarang parkir", "Dilarang berhenti", "Tempat parkir", "Parkir gratis"]),
+    
+  makeQ("dilarang-berhenti.png", "larangan", "prohibit", "S",
+    "Rambu lingkaran merah berisi huruf S yang dicoret artinya…",
+    ["Dilarang berhenti", "Dilarang parkir", "Dilarang masuk", "Boleh berhenti semaunya"]),
+    
+  makeQ("dilarang-masuk.png", "larangan", "prohibit", "▬",
+    "Rambu lingkaran merah dengan garis putih mendatar artinya…",
+    ["Semua kendaraan dilarang masuk", "Jalan satu arah", "Dilarang parkir", "Pintu keluar tol"]),
+    
+  makeQ("dilarang-melintas.png", "larangan", "prohibit", "🚷",
+    "Rambu lingkaran merah bergambar pejalan kaki yang dicoret artinya…",
+    ["Pejalan kaki dilarang melintas", "Wajib berjalan kaki", "Area pejalan kaki", "Dilarang menyeberang"]),
+    
+  makeQ("dilarang-belok-kiri.png", "larangan", "prohibit", "↰",
+    "Rambu panah belok kiri yang dicoret garis merah artinya…",
+    ["Dilarang belok kiri", "Wajib belok kiri", "Dilarang belok kanan", "Jalan buntu"]),
+    
+  makeQ("dilarang-belok-kanan.png", "larangan", "prohibit", "↱",
+    "Rambu panah belok kanan yang dicoret garis merah artinya…",
+    ["Dilarang belok kanan", "Wajib belok kanan", "Dilarang belok kiri", "Hati-hati belokan"]),
+    
+  makeQ("dilarang-putar-balik.png", "larangan", "prohibit", "U",
+    "Rambu panah putar balik yang dicoret artinya…",
+    ["Dilarang putar balik", "Dilarang belok kiri", "Wajib putar balik", "Jalan buntu"]),
+    
+  makeQ("dilarang-bunyi-klakson.png", "larangan", "prohibit", "🎺",
+    "Rambu gambar klakson yang dicoret artinya…",
+    ["Dilarang membunyikan klakson", "Wajib membunyikan klakson", "Zona bising", "Dilarang mendengar musik"]),
+    
+  makeQ("dilarang-mendahului.png", "larangan", "prohibit", "🚗",
+    "Rambu dua mobil sejajar dalam lingkaran merah artinya…",
+    ["Dilarang mendahului / menyalip", "Wajib di lajur kanan", "Boleh balapan", "Dilarang berhenti"]),
+
+  // --- PERINGATAN ---
+  makeQ("penyeberangan-pejalan-kaki.png", "peringatan", "warning", "🚶",
+    "Rambu segitiga kuning bergambar orang menyeberang artinya…",
+    ["Peringatan tempat penyeberangan pejalan kaki", "Dilarang jalan kaki", "Area olahraga", "Jalan buntu"]),
+    
+  makeQ("penyempitan-jalan.png", "peringatan", "warning", "┚┖",
+    "Rambu segitiga kuning bergambar garis menyempit artinya…",
+    ["Peringatan penyempitan jalan di depan", "Jalan melebar", "Jalan dua arah", "Jalan licin"]),
+    
+  makeQ("jalan-licin.png", "peringatan", "warning", "≈",
+    "Rambu segitiga kuning bergambar mobil tergelincir artinya…",
+    ["Peringatan jalan licin di depan", "Jalan menanjak", "Area banjir", "Dilarang ngebut"]),
+    
+  makeQ("perlintasan-kereta.png", "peringatan", "warning", "🚂",
+    "Rambu segitiga kuning bergambar kereta api artinya…",
+    ["Peringatan perlintasan kereta api", "Stasiun kereta terdekat", "Dilarang naik kereta", "Jembatan kereta"]),
+    
+  makeQ("tanjakan-curam.png", "peringatan", "warning", "▲",
+    "Rambu segitiga kuning bergambar jalan menanjak artinya…",
+    ["Peringatan tanjakan curam di depan", "Peringatan turunan", "Dilarang mendaki", "Jalan licin"]),
+    
+  makeQ("turunan-curam.png", "peringatan", "warning", "▼",
+    "Rambu segitiga kuning bergambar jalan menurun artinya…",
+    ["Peringatan turunan curam di depan", "Peringatan tanjakan", "Rem blong", "Jalan rusak"]),
+    
+  makeQ("banyak-anak-anak.png", "peringatan", "warning", "🚸",
+    "Rambu bergambar anak-anak sekolah artinya…",
+    ["Peringatan banyak anak-anak / kawasan sekolah", "Taman bermain", "Dilarang untuk anak-anak", "Jalan buntu"]),
+
+  // --- PERINTAH ---
+  makeQ("wajib-masuk-jalur-kiri.png", "perintah", "mandatory", "↙",
+    "Rambu lingkaran biru dengan panah miring ke kiri bawah artinya…",
+    ["Wajib memilih lajur/jalur kiri", "Dilarang ke kiri", "Wajib belok kanan", "Jalan buntu"]),
+    
+  makeQ("wajib-belok-kiri.png", "perintah", "mandatory", "←",
+    "Rambu lingkaran biru dengan panah mengarah ke kiri artinya…",
+    ["Wajib belok ke kiri", "Dilarang belok kiri", "Boleh belok kanan", "Jalan satu arah"]),
+    
+  makeQ("wajib-belok-kanan.png", "perintah", "mandatory", "→",
+    "Rambu lingkaran biru dengan panah mengarah ke kanan artinya…",
+    ["Wajib belok ke kanan", "Dilarang belok kanan", "Boleh belok kiri", "Jalan lurus"]),
+    
+  makeQ("bundaran.png", "perintah", "mandatory", "🔄",
+    "Rambu lingkaran biru dengan panah melingkar artinya…",
+    ["Wajib mengikuti arah bundaran", "Dilarang putar balik", "Taman kota", "Jalan buntu"]),
+
+  // --- PETUNJUK ---
+  makeQ("tempat-parkir.png", "petunjuk", "info", "P",
+    "Rambu kotak biru dengan huruf P putih artinya…",
+    ["Petunjuk lokasi tempat parkir", "Dilarang parkir", "Pos polisi lalu lintas", "Jalan tol"]),
+    
+  makeQ("pom-bensin.png", "petunjuk", "info", "⛽",
+    "Rambu kotak bergambar pompa bensin artinya…",
+    ["Petunjuk lokasi SPBU (pom bensin)", "Dilarang mengisi bensin", "Bengkel mobil", "Rest area"]),
+    
+  makeQ("rumah-sakit.png", "petunjuk", "info", "🏥",
+    "Rambu kotak biru bergambar tempat tidur dan palang merah artinya…",
+    ["Petunjuk lokasi rumah sakit", "Hotel / penginapan", "Halte bus", "Apotek"]),
+    
+  makeQ("masjid.png", "petunjuk", "info", "🕌",
+    "Rambu kotak biru bergambar kubah masjid artinya…",
+    ["Petunjuk lokasi tempat ibadah masjid", "Museum", "Taman kota", "Restoran halal"]),
+];
+
+const CAT_NAME = {
+  larangan: "⛔ RAMBU LARANGAN",
+  peringatan: "⚠️ RAMBU PERINGATAN",
+  perintah: "🔵 RAMBU PERINTAH",
+  petunjuk: "🟢 RAMBU PETUNJUK",
+};
+
+const state = {
+  seq: 0, mode: null, over: false, busy: false,
+  current: 0, players: [], board: null, deck: [], tileEls: {},
+};
+let tokenEls = [];
+
+const boardEl = $("board");
+const diceEl = $("dice");
+const rollBtn = $("rollBtn");
+const deckPileEl = $("deckPile");
+const deckCountEl = $("deckCount");
+const logListEl = $("logList");
+const modeTagEl = $("modeTag");
+const quizModal = $("quizModal");
+const quizCard = $("quizCard");
+const quizCatEl = $("quizCat");
+const quizTurnEl = $("quizTurn");
+const quizSignEl = $("quizSign");
+const quizTextEl = $("quizText");
+const quizOptsEl = $("quizOpts");
+const quizFbEl = $("quizFb");
+const winModal = $("winModal");
+const modeOverlay = $("modeOverlay");
+const rulesModal = $("rulesModal");
+
+function generateBoard() {
+  const ladders = {}, snakes = {};
+  const used = new Set([1, 100]);
+  let guard = 0;
+  while (Object.keys(ladders).length < 6 && guard++ < 600) {
+    const base = rnd(3, 58);
+    const top = rnd(base + 14, Math.min(99, base + 36));
+    if (used.has(base) || used.has(top)) continue;
+    ladders[base] = top; used.add(base); used.add(top);
+  }
+  guard = 0;
+  while (Object.keys(snakes).length < 5 && guard++ < 600) {
+    const head = rnd(45, 96);
+    const tail = rnd(Math.max(2, head - 38), head - 14);
+    if (used.has(head) || used.has(tail)) continue;
+    snakes[head] = tail; used.add(head); used.add(tail);
+  }
+  const signs = new Set();
+  Object.keys(ladders).forEach((k) => signs.add(+k));
+  Object.keys(snakes).forEach((k) => signs.add(+k));
+  guard = 0;
+  while (signs.size < 24 && guard++ < 1200) {
+    const t = rnd(2, 99);
+    if (!used.has(t)) signs.add(t);
+  }
+  const prohib = shuffle(QUESTIONS.map((q, i) => q.cat === "larangan" ? i : -1).filter(i => i >= 0));
+  const others = shuffle(QUESTIONS.map((q, i) => q.cat !== "larangan" ? i : -1).filter(i => i >= 0));
+  let pi = 0, oi = 0;
+  const tileQ = {};
+  Object.keys(snakes).forEach((k) => { tileQ[k] = prohib[pi++ % prohib.length]; });
+  Object.keys(ladders).forEach((k) => { tileQ[k] = others[oi++ % others.length]; });
+  const rest = [...signs].filter((n) => !ladders[n] && !snakes[n]);
+  shuffle(rest).forEach((n) => {
+    tileQ[n] = Math.random() < 0.4 ? prohib[pi++ % prohib.length] : others[oi++ % others.length];
+  });
+  return { ladders, snakes, signs, tileQ };
+}
+
+function tileCenter(n) {
+  const idx = n - 1;
+  const rowFromBottom = Math.floor(idx / 10);
+  let col = idx % 10;
+  if (rowFromBottom % 2 === 1) col = 9 - col;
+  return { x: col * 10 + 5, y: (9 - rowFromBottom) * 10 + 5 };
+}
+
+function buildMini(shape) {
+  const m = document.createElement("span");
+  m.className = "mini m-" + shape;
+  return m;
+}
+
+function renderBoard() {
+  boardEl.innerHTML = "";
+  state.tileEls = {};
+  for (let gridRow = 0; gridRow < 10; gridRow++) {
+    const rowFromBottom = 9 - gridRow;
+    for (let gridCol = 0; gridCol < 10; gridCol++) {
+      const colInRow = rowFromBottom % 2 === 1 ? 9 - gridCol : gridCol;
+      const n = rowFromBottom * 10 + colInRow + 1;
+      const d = document.createElement("div");
+      let cls = "tile";
+      if ((gridRow + gridCol) % 2) cls += " alt";
+      if (n === 1) cls += " start";
+      if (n === 100) cls += " finish";
+      const isLadder = !!state.board.ladders[n];
+      const isSnake = !!state.board.snakes[n];
+      const isSign = state.board.signs.has(n);
+      if (isSign) cls += " sign";
+      if (isLadder) cls += " lb";
+      if (isSnake) cls += " sh";
+      d.className = cls;
+      const num = document.createElement("span");
+      num.className = "num";
+      num.textContent = n;
+      d.appendChild(num);
+      if (n === 1) {
+        const s = document.createElement("span");
+        s.className = "tile-label";
+        s.textContent = "Go";
+        d.appendChild(s);
+      }
+      if (n === 100) {
+        const s = document.createElement("span");
+        s.className = "tile-label flag";
+        s.textContent = "🏆";
+        d.appendChild(s);
+      }
+      if (isSign) {
+        const q = QUESTIONS[state.board.tileQ[n]];
+        d.appendChild(buildMini(q.shape));
+        d.title = "Petak " + n + " — kartu soal rambu";
+      }
+      if (isLadder) {
+        const b = document.createElement("span");
+        b.className = "badge";
+        b.textContent = "";
+        d.appendChild(b);
+        d.title = "Petak " + n + " — tangga ke " + state.board.ladders[n];
+      }
+      if (isSnake) {
+        const b = document.createElement("span");
+        b.className = "badge";
+        b.textContent = "";
+        d.appendChild(b);
+        d.title = "Petak " + n + " — kepala ular!";
+      }
+      state.tileEls[n] = d;
+      boardEl.appendChild(d);
+    }
+  }
+  drawOverlay();
+}
+
+const SVG_NS = "http://www.w3.org/2000/svg";
+function svgEl(name, attrs) {
+  const e = document.createElementNS(SVG_NS, name);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  return e;
+}
+
+function drawOverlay() {
+  const old = document.getElementById("overlaySvg");
+  if (old) old.remove();
+  const svg = document.createElementNS(SVG_NS, "svg");
+  svg.id = "overlaySvg";
+  svg.setAttribute("viewBox", "0 0 100 100");
+  svg.setAttribute("preserveAspectRatio", "none");
+  for (const [b, t] of Object.entries(state.board.ladders)) addLadder(svg, +b, +t);
+  for (const [h, t] of Object.entries(state.board.snakes)) addSnake(svg, +h, +t);
+  boardEl.appendChild(svg);
+}
+
+function addLadder(svg, b, t) {
+  const a = tileCenter(b), c = tileCenter(t);
+  const dx = c.x - a.x, dy = c.y - a.y;
+  const len = Math.hypot(dx, dy);
+  const ux = dx / len, uy = dy / len;
+  const px = -uy, py = ux, off = 1.6;
+  const sx = a.x + ux * 2, sy = a.y + uy * 2;
+  const ex = c.x - ux * 2, ey = c.y - uy * 2;
+  const g = svgEl("g", { opacity: ".92" });
+  g.appendChild(svgEl("line", { x1: sx + px * off, y1: sy + py * off, x2: ex + px * off, y2: ey + py * off, stroke: "#b45309", "stroke-width": "1.1", "stroke-linecap": "round" }));
+  g.appendChild(svgEl("line", { x1: sx - px * off, y1: sy - py * off, x2: ex - px * off, y2: ey - py * off, stroke: "#b45309", "stroke-width": "1.1", "stroke-linecap": "round" }));
+  const rungs = Math.max(3, Math.floor(len / 3.2));
+  for (let i = 1; i < rungs; i++) {
+    const tt = i / rungs;
+    const x = sx + (ex - sx) * tt, y = sy + (ey - sy) * tt;
+    g.appendChild(svgEl("line", { x1: x + px * off, y1: y + py * off, x2: x - px * off, y2: y - py * off, stroke: "#f59e0b", "stroke-width": ".8", "stroke-linecap": "round" }));
+  }
+  svg.appendChild(g);
+}
+
+const SNAKE_IMAGES = ["ular1.png", "ular2.png", "ular3.png"];
+
+function getSnakeImageFallback() {
+  return "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 400'%3E%3Cpath d='M50,20 Q80,60 50,100 Q20,140 50,180 Q80,220 50,260 Q20,300 50,340 Q60,370 50,390' stroke='%23dc2626' stroke-width='18' fill='none' stroke-linecap='round'/%3E%3Cpath d='M50,20 Q80,60 50,100 Q20,140 50,180 Q80,220 50,260 Q20,300 50,340 Q60,370 50,390' stroke='%23000' stroke-width='8' fill='none' stroke-linecap='round' stroke-dasharray='15,10'/%3E%3Ccircle cx='50' cy='20' r='12' fill='%23dc2626'/%3E%3Ccircle cx='46' cy='17' r='2' fill='%23000'/%3E%3Ccircle cx='54' cy='17' r='2' fill='%23000'/%3E%3C/svg%3E";
+}
+
+function addSnake(svg, h, t) {
+  const a = tileCenter(h), b = tileCenter(t);
+  const dx = b.x - a.x, dy = b.y - a.y;
+  const len = Math.hypot(dx, dy) || 1;
+  const snakeIndex = Object.keys(state.board.snakes).indexOf(String(h));
+  const imgSrc = SNAKE_IMAGES[snakeIndex % SNAKE_IMAGES.length];
+  const angle = Math.atan2(dy, dx) * 180 / Math.PI + 90;
+  const photoAspect = 0.25;
+  const snakeLength = len * 0.95;
+  const snakeWidth = snakeLength * photoAspect;
+  const midX = (a.x + b.x) / 2;
+  const midY = (a.y + b.y) / 2;
+
+  const g = svgEl("g", {});
+  const shadowFilter = svgEl("filter", { id: "snakeShadow-" + h, x: "-20%", y: "-20%", width: "140%", height: "140%" });
+  shadowFilter.appendChild(svgEl("feDropShadow", { dx: "0.3", dy: "0.5", stdDeviation: "0.5", "flood-color": "#000", "flood-opacity": "0.5" }));
+  let defs = svg.querySelector("defs");
+  if (!defs) { defs = svgEl("defs", {}); svg.insertBefore(defs, svg.firstChild); }
+  defs.appendChild(shadowFilter);
+
+  const img = svgEl("image", {
+    href: imgSrc,
+    x: -snakeWidth / 2,
+    y: -snakeLength / 2,
+    width: snakeWidth,
+    height: snakeLength,
+    preserveAspectRatio: "xMidYMid meet",
+    filter: "url(#snakeShadow-" + h + ")"
+  });
+
+  const transform = `translate(${midX.toFixed(2)}, ${midY.toFixed(2)}) rotate(${angle.toFixed(2)})`;
+  img.setAttribute("transform", transform);
+
+  img.addEventListener("error", () => {
+    img.setAttribute("href", getSnakeImageFallback());
+  });
+
+  g.appendChild(img);
+  svg.appendChild(g);
+}
+
+function buildTokens() {
+  tokenEls.forEach((t) => t && t.remove());
+  tokenEls = state.players.map((p, i) => {
+    const tok = document.createElement("div");
+    tok.className = "token t" + i;
+    const img = document.createElement("img");
+    img.src = p.avatar;
+    img.alt = p.name;
+    tok.appendChild(img);
+    boardEl.appendChild(tok);
+    return tok;
+  });
+}
+
+function positionToken(i) {
+  const p = state.players[i];
+  const tok = tokenEls[i];
+  if (!tok) return;
+  if (p.pos === 0) {
+    const el1 = state.tileEls[1];
+    if (!el1) return;
+    const w = el1.offsetWidth;
+    tok.style.width = tok.style.height = (w * 0.5) + "px";
+    tok.style.left = (el1.offsetLeft - w * 0.62) + "px";
+    tok.style.top = (el1.offsetTop + el1.offsetHeight / 2 + (i === 0 ? -0.32 : 0.32) * w) + "px";
+    return;
+  }
+  const el = state.tileEls[p.pos];
+  if (!el) return;
+  const w = el.offsetWidth;
+  const offX = (i === 0 ? -0.20 : 0.20) * w;
+  tok.style.width = tok.style.height = (w * 0.5) + "px";
+  tok.style.left = (el.offsetLeft + w / 2 + offX) + "px";
+  tok.style.top = (el.offsetTop + el.offsetHeight / 2) + "px";
+}
+
+function positionAllTokens() { state.players.forEach((_, i) => positionToken(i)); }
+
+const PIP_MAP = { 1: [4], 2: [0, 8], 3: [0, 4, 8], 4: [0, 2, 6, 8], 5: [0, 2, 4, 6, 8], 6: [0, 2, 3, 5, 6, 8] };
+function setDiceFace(v) {
+  diceEl.innerHTML = "";
+  for (let i = 0; i < 9; i++) {
+    const cell = document.createElement("span");
+    cell.className = "cell" + (PIP_MAP[v].includes(i) ? " pip" : "");
+    diceEl.appendChild(cell);
+  }
+}
+
+async function animateDice(finalV, seq) {
+  diceEl.classList.add("rolling");
+  for (let i = 0; i < 7; i++) {
+    setDiceFace(rnd(1, 6));
+    await sleep(70);
+    if (seq !== state.seq) return;
+  }
+  setDiceFace(finalV);
+  diceEl.classList.remove("rolling");
+}
+
+function addLog(msg) {
+  const li = document.createElement("li");
+  li.textContent = msg;
+  logListEl.prepend(li);
+  while (logListEl.children.length > 40) logListEl.lastChild.remove();
+}
+function clearLog() { logListEl.innerHTML = ""; }
+
+function updateHUD() {
+  state.players.forEach((p, i) => {
+    $("name" + i).textContent = p.name;
+    $("pos" + i).textContent = p.pos;
+    $("pts" + i).textContent = p.pts;
+    $("pcard" + i).classList.toggle("active", state.current === i && !state.over);
+  });
+  modeTagEl.textContent = "Mode: " + (state.mode === "cpu" ? "Pemain vs CPU 🤖" : "2 Pemain 👥");
+}
+
+function updateControls() {
+  if (!state.players.length) return;
+  const p = state.players[state.current];
+  rollBtn.disabled = state.busy || state.over || p.isCpu;
+  rollBtn.textContent = p.isCpu ? "🤖 Giliran CPU…" : (state.busy ? "⏳ Menunggu…" : "🎲 Lempar Dadu (" + p.name + ")");
+}
+
+function updateDeckUI(pulse) {
+  deckCountEl.textContent = state.deck.length;
+  if (pulse) {
+    deckPileEl.classList.remove("pulse");
+    void deckPileEl.offsetWidth;
+    deckPileEl.classList.add("pulse");
+  }
+}
+
+function buildFallback(q) {
+  const fb = document.createElement("div");
+  fb.className = "sign-fallback fb-" + q.shape;
+  if (q.shape === "prohibit") fb.innerHTML = '<span class="sym">' + q.sym + '</span><span class="bar"></span>';
+  else if (q.shape === "warning") fb.innerHTML = '<span class="tri"></span><span class="sym">' + q.sym + "</span>";
+  else fb.innerHTML = '<span class="sym">' + q.sym + "</span>";
+  return fb;
+}
+
+/* ---------------- PEMANGGILAN GAMBAR LANGSUNG DI ROOT DIREKTORI ---------------- */
+function buildSignVisual(q) {
+  quizSignEl.innerHTML = "";
+  const img = document.createElement("img");
+  img.src = q.img; // Langsung ambil dari root tanpa folder asset/rambu/
+  img.alt = "Rambu lalu lintas";
+  const fb = buildFallback(q);
+  fb.style.display = "none";
+  img.addEventListener("error", () => { img.style.display = "none"; fb.style.display = "flex"; });
+  quizSignEl.appendChild(img);
+  quizSignEl.appendChild(fb);
+}
+
+function pickWrongIdx(correctIdx) {
+  let i;
+  do { i = Math.floor(Math.random() * 4); } while (i === correctIdx);
+  return i;
+}
+
+function openQuiz(player, q) {
+  return new Promise((resolve) => {
+    const seq = state.seq;
+    if (state.deck.length === 0) state.deck = shuffle(QUESTIONS.map((_, i) => i));
+    state.deck.pop();
+    updateDeckUI(true);
+    const pairs = shuffle(q.opts.map((t, i) => ({ t, ok: i === 0 })));
+    const correctIdx = pairs.findIndex((x) => x.ok);
+    const LETTERS = ["A", "B", "C", "D"];
+    quizCatEl.textContent = CAT_NAME[q.cat] || "❓ KARTU SOAL";
+    quizCatEl.className = "quiz-cat cat-" + q.cat;
+    quizTurnEl.textContent = player.emoji + " " + player.name + " menjawab";
+    buildSignVisual(q);
+    quizTextEl.textContent = q.q;
+    quizFbEl.className = "quiz-feedback";
+    quizFbEl.textContent = player.isCpu ? "🤖 CPU sedang berpikir…" : "Pilih jawabanmu!";
+    quizOptsEl.innerHTML = "";
+    quizOptsEl.classList.toggle("locked", !!player.isCpu);
+    let done = false;
+    const btns = [];
+    pairs.forEach((pr, i) => {
+      const b = document.createElement("button");
+      b.className = "opt";
+      b.innerHTML = '<span class="opt-letter">' + LETTERS[i] + '</span><span class="opt-text">' + pr.t + "</span>";
+      b.addEventListener("click", () => pick(i));
+      quizOptsEl.appendChild(b);
+      btns.push(b);
+    });
+    function pick(i) {
+      if (done) return;
+      done = true;
+      const correct = i === correctIdx;
+      btns.forEach((b, j) => {
+        b.disabled = true;
+        if (j === correctIdx) b.classList.add("correct");
+        else if (j === i) b.classList.add("wrong");
+        else b.classList.add("dim");
+      });
+      if (correct) { quizFbEl.textContent = "✅ Benar! +10 poin"; quizFbEl.classList.add("good"); }
+      else { quizFbEl.textContent = "❌ Salah! Jawaban yang benar: " + LETTERS[correctIdx]; quizFbEl.classList.add("bad"); }
+      setTimeout(() => {
+        quizModal.classList.remove("show");
+        quizCard.classList.remove("flipped");
+        setTimeout(() => { if (seq !== state.seq) return; resolve({ correct }); }, 260);
+      }, 1650);
+    }
+    quizModal.classList.add("show");
+    quizCard.classList.remove("flipped");
+    requestAnimationFrame(() => setTimeout(() => quizCard.classList.add("flipped"), 160));
+    if (player.isCpu) {
+      const choice = Math.random() < 0.65 ? correctIdx : pickWrongIdx(correctIdx);
+      setTimeout(() => { if (seq === state.seq && !done) pick(choice); }, 2700);
+    }
+  });
+}
+
+async function moveSteps(p, target, seq) {
+  const idxP = state.players.indexOf(p);
+  const dir = target > p.pos ? 1 : -1;
+  while (p.pos !== target) {
+    p.pos += dir;
+    positionToken(idxP);
+    updateHUD();
+    await sleep(190);
+    if (seq !== state.seq) return;
+  }
+}
+
+async function glideTo(p, target, seq) {
+  const idxP = state.players.indexOf(p);
+  p.pos = target;
+  tokenEls[idxP].classList.add("glide");
+  positionToken(idxP);
+  updateHUD();
+  await sleep(830);
+  if (seq !== state.seq) return;
+  tokenEls[idxP].classList.remove("glide");
+}
+
+async function resolveTile(p, seq) {
+  const n = p.pos;
+  if (n >= 100) { doWin(p); return true; }
+  const B = state.board;
+  const qi = B.tileQ[n];
+  if (qi === undefined) return false;
+  const q = QUESTIONS[qi];
+  const isLadder = !!B.ladders[n];
+  const isSnake = !!B.snakes[n];
+  if (isLadder) addLog("🪜 " + p.name + " menemukan tangga " + n + " → " + B.ladders[n] + "!");
+  else if (isSnake) addLog("🐍 " + p.name + " menghadapi kepala ular di petak " + n + "!");
+  else addLog("🃏 " + p.name + " mendarat di petak rambu " + n + ".");
+  const { correct } = await openQuiz(p, q);
+  if (seq !== state.seq) return true;
+  if (correct) {
+    p.pts += 10;
+    addLog("✅ " + p.name + " menjawab benar! +10 poin.");
+    if (isLadder) { addLog("⬆️ " + p.name + " NAIK tangga!"); await glideTo(p, B.ladders[n], seq); }
+    else if (isSnake) addLog("🛡️ " + p.name + " lolos dari ular!");
+  } else {
+    if (isSnake) { addLog("🐍 " + p.name + " salah… meluncur turun."); await glideTo(p, B.snakes[n], seq); }
+    else if (q.cat === "larangan") {
+      const back = Math.max(1, n - 2);
+      addLog("⛔ Salah di rambu larangan! " + p.name + " mundur 2 langkah.");
+      await moveSteps(p, back, seq);
+    } else addLog("😅 Jawaban salah — tanpa poin.");
+  }
+  updateHUD();
+  if (seq !== state.seq) return true;
+  if (p.pos >= 100) { doWin(p); return true; }
+  return false;
+}
+
+async function performTurn() {
+  if (state.busy || state.over || !state.players.length) return;
+  const seq = state.seq;
+  const p = state.players[state.current];
+  state.busy = true;
+  updateControls();
+  const v = rnd(1, 6);
+  await animateDice(v, seq);
+  if (seq !== state.seq) return;
+  addLog("🎲 " + p.name + " melempar dadu → " + v + ".");
+  if (p.pos + v > 100) {
+    addLog("⛔ Harus tepat di petak 100 — " + p.name + " tetap di tempat.");
+    await sleep(600);
+    if (seq === state.seq) endTurn(seq);
+    return;
+  }
+  await moveSteps(p, p.pos + v, seq);
+  if (seq !== state.seq) return;
+  const ended = await resolveTile(p, seq);
+  if (seq !== state.seq || ended) return;
+  endTurn(seq);
+}
+
+function endTurn(seq) {
+  if (state.over || seq !== state.seq) return;
+  state.busy = false;
+  state.current = 1 - state.current;
+  updateHUD();
+  updateControls();
+  addLog("➡️ Giliran " + state.players[state.current].name + ".");
+  if (state.players[state.current].isCpu) {
+    setTimeout(() => { if (seq === state.seq && !state.over && !state.busy) performTurn(); }, 1200);
+  }
+}
+
+function doWin(p) {
+  state.over = true;
+  state.busy = false;
+  updateControls();
+  updateHUD();
+  addLog("🏁 " + p.name + " mencapai petak 100 dan MENANG! 🎉");
+  
+  // Memutar sound kemenangan win_sfx.mp3
+  winAudio.currentTime = 0;
+  winAudio.play().catch(e => console.log("Audio play prevented or missing:", e));
+
+  $("winnerName").textContent = p.emoji + " " + p.name;
+  $("winnerPts").textContent = "⭐ " + p.pts + " poin dari jawaban benar";
+  winModal.classList.add("show");
+  confettiBurst();
+}
+
+function confettiBurst() {
+  const colors = ["#f59e0b", "#22c55e", "#38bdf8", "#ef4444", "#a78bfa", "#fbbf24"];
+  for (let i = 0; i < 90; i++) {
+    const c = document.createElement("i");
+    c.className = "confetti";
+    c.style.left = Math.random() * 100 + "vw";
+    c.style.background = colors[i % colors.length];
+    c.style.animationDelay = (Math.random() * 0.5) + "s";
+    c.style.animationDuration = (2.2 + Math.random() * 2) + "s";
+    const s = 6 + Math.random() * 8;
+    c.style.width = s + "px";
+    c.style.height = (s * 0.45) + "px";
+    document.body.appendChild(c);
+    setTimeout(() => c.remove(), 4800);
+  }
+}
+
+function initGame(mode) {
+  state.seq++;
+  state.mode = mode;
+  state.over = false;
+  state.busy = false;
+  state.current = 0;
+
+  const avatarAHM = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%23ffffff' width='100' height='100'/%3E%3Ctext x='50' y='58' font-size='28' font-weight='900' text-anchor='middle' fill='%23cc0000' font-family='Arial'%3EAHM%3C/text%3E%3Ctext x='50' y='78' font-size='10' font-weight='700' text-anchor='middle' fill='%23333'%3EAstra Honda%3C/text%3E%3C/svg%3E";
+  const avatarHonda = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%23cc0000' width='100' height='100'/%3E%3Cpath d='M20,45 Q30,25 50,20 Q70,25 80,45 L75,50 Q65,35 50,32 Q35,35 25,50 Z' fill='white'/%3E%3Cpath d='M25,50 Q35,40 50,38 Q65,40 75,50 L70,55 Q60,48 50,46 Q40,48 30,55 Z' fill='white'/%3E%3Cpath d='M30,55 Q40,48 50,46 Q60,48 70,55 L65,60 Q55,54 50,53 Q45,54 35,60 Z' fill='white'/%3E%3Ctext x='50' y='78' font-size='11' font-weight='900' text-anchor='middle' fill='white' font-family='Arial'%3EHONDA%3C/text%3E%3C/svg%3E";
+
+  state.players = [
+    { name: "Pemain 1", emoji: "🏍️", pos: 0, pts: 0, isCpu: false, avatar: avatarAHM },
+    mode === "cpu"
+      ? { name: "CPU", emoji: "🤖", pos: 0, pts: 0, isCpu: true, avatar: avatarHonda }
+      : { name: "Pemain 2", emoji: "🏍️", pos: 0, pts: 0, isCpu: false, avatar: avatarHonda }
+  ];
+
+  state.board = generateBoard();
+  renderBoard();
+  buildTokens();
+  positionAllTokens();
+  state.deck = shuffle(QUESTIONS.map((_, i) => i));
+  updateDeckUI(false);
+  clearLog();
+  addLog("🚦 Permainan dimulai!");
+  addLog("🪜 Jawab BENAR untuk naik tangga. 🐍 Salah di kepala ular = meluncur turun!");
+  setDiceFace(6);
+  updateHUD();
+  updateControls();
+}
+
+rollBtn.addEventListener("click", () => {
+  if (state.players.length && state.players[state.current].isCpu) return;
+  performTurn();
+});
+
+document.addEventListener("keydown", (e) => {
+  if (e.code === "Space" && !rollBtn.disabled && !quizModal.classList.contains("show")) {
+    e.preventDefault();
+    performTurn();
+  }
+});
+
+window.addEventListener("resize", positionAllTokens);
+
+$("btnPvp").addEventListener("click", () => { modeOverlay.classList.remove("show"); initGame("pvp"); });
+$("btnCpu").addEventListener("click", () => { modeOverlay.classList.remove("show"); initGame("cpu"); });
+$("btnReplay").addEventListener("click", () => { winModal.classList.remove("show"); initGame(state.mode); });
+$("btnChangeMode").addEventListener("click", () => { winModal.classList.remove("show"); modeOverlay.classList.add("show"); });
+$("btnRules").addEventListener("click", () => rulesModal.classList.add("show"));
+$("btnCloseRules").addEventListener("click", () => rulesModal.classList.remove("show"));
+$("btnRestart").addEventListener("click", () => { if (state.mode) initGame(state.mode); else modeOverlay.classList.add("show"); });
+$("btnHome").addEventListener("click", () => {
+  state.seq++;
+  state.busy = false;
+  winModal.classList.remove("show");
+  quizModal.classList.remove("show");
+  quizCard.classList.remove("flipped");
+  modeOverlay.classList.add("show");
+});
+
+rulesModal.addEventListener("click", (e) => { if (e.target === rulesModal) rulesModal.classList.remove("show"); });
+
+initGame("pvp");
+modeOverlay.classList.add("show");
+</script>
+</body>
+</html>
