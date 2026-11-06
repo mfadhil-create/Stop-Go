@@ -1018,8 +1018,11 @@ function initGame(mode) {
   state.busy = false;
   state.current = 0;
 
-  const avatarAHM = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%23ffffff' width='100' height='100'/%3E%3Ctext x='50' y='58' font-size='28' font-weight='900' text-anchor='middle' fill='%23cc0000' font-family='Arial'%3EAHM%3C/text%3E%3Ctext x='50' y='78' font-size='10' font-weight='700' text-anchor='middle' fill='%23333'%3EAstra Honda%3C/text%3E%3C/svg%3E";
-  const avatarHonda = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%23cc0000' width='100' height='100'/%3E%3Cpath d='M20,45 Q30,25 50,20 Q70,25 80,45 L75,50 Q65,35 50,32 Q35,35 25,50 Z' fill='white'/%3E%3Cpath d='M25,50 Q35,40 50,38 Q65,40 75,50 L70,55 Q60,48 50,46 Q40,48 30,55 Z' fill='white'/%3E%3Cpath d='M30,55 Q40,48 50,46 Q60,48 70,55 L65,60 Q55,54 50,53 Q45,54 35,60 Z' fill='white'/%3E%3Ctext x='50' y='78' font-size='11' font-weight='900' text-anchor='middle' fill='white' font-family='Arial'%3EHONDA%3C/text%3E%3C/svg%3E";
+    // Pemain 1: Bidak/Mobil Merah
+  const avatarAHM = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%23ef4444' width='100' height='100'/%3E%3Ctext x='50' y='62' font-size='45' text-anchor='middle'%3E🚗%3C/text%3E%3C/svg%3E";
+
+  // Pemain 2 / CPU: Bidak/Mobil Biru
+  const avatarHonda = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%233b82f6' width='100' height='100'/%3E%3Ctext x='50' y='62' font-size='45' text-anchor='middle'%3E🚙%3C/text%3E%3C/svg%3E";
 
   state.players = [
     { name: "Pemain 1", emoji: "🏍️", pos: 0, pts: 0, isCpu: false, avatar: avatarAHM },
